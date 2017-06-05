@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        div#text div {
+            margin-bottom: 10px;
+            border-bottom: 0.1px solid #999;
+        }
+
+        div#text p {
+            text-align: center;
+        }
+
+        div#text span.key {
+            float: left;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="input">
+        <input type="text" placeholder="搜索知乎用户" id="zhihu-find-people">
+        <button id="find-people-btn">查找知乎用户</button>
+    </div>
+    <div id="text"></div>
+</body>
+<script src="http://localhost:3000/lib/ajax.js"></script>
+<script>
+    var user = document.getElementById('zhihu-find-people');
+    var btn = document.getElementById('find-people-btn');
+    var text = document.getElementById('text');
+    var username;
+
+    btn.addEventListener('click', function () {
+        username = user.value;
+        var query = "?type=people&q=" + username;
+        ajax('get', 'http://localhost:3000/userinfo', "", query, function (res) {
+            let resHtml = '';
+            res = JSON.parse(res);
+            res.forEach((e, i) => {
+                let div = '<div class="people">';
+                for (let key in res[i]) {
+                    if (res[i][key]) {
+                        div += `<p><span class="key">${key}</span><span>${res[i][key]}</span></p>`;
+                    }
+                }
+                div += '</div>';
+                text.innerHTML += div;
+            })
+        })
+    })
+</script>
+</html>
