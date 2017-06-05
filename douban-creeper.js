@@ -1,27 +1,9 @@
 var request = require('request');
 var fs = require('fs');
 
-var query = 'utmwv=5.6.7&utms=4&utmn=784667893&utmhn=www.douban.com&utmt=event&utme=14(26200*80*390*740*0*0*5100*5200)(26213*86*393*742*4*0*5195*5213)8(responsive_view_mode)9(desktop)&utmcs=UTF-8&utmsr=1366x768&utmvp=444x655&utmsc=24-bit&utmul=zh-cn&utmje=0&utmfl=-&utmdt=%E5%85%B3%E4%BA%8E%E4%B9%A6%E5%8D%95%E7%9A%84%E4%B9%A6%20(%E8%B1%86%E7%93%A3)&utmhid=1155380536&utmr=-&utmp=%2Ftag%2F%2525E4%2525B9%2525A6%2525E5%25258D%252595%2Fbook&utmht=1496544808126&utmac=UA-7019765-1&utmcc=__utma%3D30149280.113880206.1496502878.1496502878.1496544779.2%3B%2B__utmz%3D30149280.1496502878.1.1.utmcsr%3D(direct)%7Cutmccn%3D(direct)%7Cutmcmd%3D(none)%3B&utmjid=&utmu=qRMAAA0GAAAAAAAAQAAAAAAE~';
-var option = {
-    hostname: 'douban.com',
-    port: 80,
-    method: 'GET',
-    headers:
-    {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, sdch, br',
-        'Accept-Language': 'zh-CN,zh;q=0.8',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Cookie': '',
-        'Pragma': 'no-cache',
-        'Referer': 'https://www.google.com.hk/',
-        'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36'
-    }
-
-}
-const fileBasePath = './data/';
+const fileBasePath = './douban-data/';
+var bookCount = 0;
+var movieCount = 0;
 
 /**
  * 
@@ -31,19 +13,25 @@ const fileBasePath = './data/';
 function writeFile(path, data) {
     fs.appendFileSync(path, data);
 }
-
+function clearFile(path, data) {
+    fs.writeFile(path, "", (err) => {});
+}
 /**
  * 
  * @param {*爬取的url} url 
  * @param {*从爬取的数据中要提取的参数} options 
  */
-function getDataByUrl(url, info) {
+function getDataByUrl(url, type, e) {
     var req = request(url, (err, response, body) => {
-        body = JSON.parse(body);
-        let data = resolveData(body['subject_collection_items'], bookOptions);
-        writeFile(fileBasePath + info + '.txt', JSON.stringify(data));
+        if (body) {
+            body = JSON.parse(body)['subject_collection_items'];
+            let data = resolveData(body, options);
+            type.count += body.length;
+            console.log(`${type.name},${e}: ${type.count}`);
+            writeFile(fileBasePath + type.name + '.txt', JSON.stringify(data));
+        }
+
     })
-    req.setHeader(option);
     req.end();
 }
 
@@ -91,15 +79,30 @@ var url = 'https://m.douban.com/rexxar/api/v2/subject_collection/';
 var movieType = ['movie_showing', 'movie_free_stream', 'movie_latest'];
 // 书籍
 var bookType = ['book_fiction', 'book_nonfiction', 'filter_book_fiction_hot', 'filter_book_love_hot'];
-var bookOptions = ['info', 'release_date', { 'rating': ['count', 'max', 'value'] }, 'title', 'url', 'actors', 'directors'];
+var options = ['title', { 'rating': ['count', 'max', 'value'] }, 'info', 'release_date', 'actors', 'directors', 'url'];
 
 (main => {
-    let count = 0;
+    clearFile(fileBasePath + 'book.txt', '')
+    clearFile(fileBasePath + 'movie.txt', '')
+    
+    let book = {name: 'book', count: 0};
+    let movie = {name: 'movie', count: 0};
+    let page = 0;
     bookType.forEach((e, i) => {
-        getDataByUrl(url + e + '/items?start=' + count, 'book');
+        writeFile(fileBasePath + 'book.txt', '');
+        while (page < 50) {
+            getDataByUrl(url + e + '/items?start=' + page, book, e);
+            page += 18;
+        }
+        page = 0;
     })
+    page = 0;
     movieType.forEach((e, i) => {
-        getDataByUrl(url + e + '/items?start=' + count, 'movie');
+        writeFile(fileBasePath + 'movie.txt', '');
+        while (page < 50) {
+            getDataByUrl(url + e + '/items?start=' + page, movie, e);
+            page += 18;
+        }
+        page = 0;
     })
-    console.log('提取成功');
 })()
