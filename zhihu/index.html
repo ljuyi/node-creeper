@@ -7,18 +7,43 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        div#text {
+            flex-wrap: wrap;
+            display: flex;
+        }
+
         div#text div {
-            margin-bottom: 10px;
+            flex: 0 0 50%;
+            width: 50%;
+            padding: 10px;
             border-bottom: 0.1px solid #999;
+        }
+
+        div#text div:nth-child(2n+1) {
+            border-right: 1px solid #999;
         }
 
         div#text p {
             text-align: center;
+            display: flex;
+        }
+
+        div#text span {
+            display: inline-block;
         }
 
         div#text span.key {
-            float: left;
-            margin-left: 10px;
+            flex: 0 0 100px;
+            width: 100px;
+        }
+
+        div#text span.value {
+            flex: 1;
+            text-align: center;
         }
     </style>
 </head>
@@ -27,18 +52,21 @@
     <div class="input">
         <input type="text" placeholder="搜索知乎用户" id="zhihu-find-people">
         <button id="find-people-btn">查找知乎用户</button>
+        <input type="text" placeholder="查看用户粉丝" id="zhihu-find-follower">
+        <button id="find-people-btn">查看用户粉丝</button>
     </div>
     <div id="text"></div>
 </body>
 <script src="http://localhost:3000/lib/ajax.js"></script>
 <script>
     var user = document.getElementById('zhihu-find-people');
-    var btn = document.getElementById('find-people-btn');
+    var useBbtn = document.getElementById('find-people-btn');
+    var follower = document.getElementById('zhihu-find-follower');
+    var follBtn = document.getElementById('find-people-btn');
     var text = document.getElementById('text');
-    var username;
 
-    btn.addEventListener('click', function () {
-        username = user.value;
+    useBbtn.addEventListener('click', function () {
+        var username = user.value;
         var query = "?type=people&q=" + username;
         ajax('get', 'http://localhost:3000/userinfo', "", query, function (res) {
             let resHtml = '';
@@ -47,7 +75,7 @@
                 let div = '<div class="people">';
                 for (let key in res[i]) {
                     if (res[i][key]) {
-                        div += `<p><span class="key">${key}</span><span>${res[i][key]}</span></p>`;
+                        div += `<p><span class="key">${key}:</span><span class="value">${res[i][key]}</span></p>`;
                     }
                 }
                 div += '</div>';
@@ -55,5 +83,11 @@
             })
         })
     })
+    follBtn.addEventListener('click', function () {
+        var username = follower.value;
+        var query = "?type="
+    })
+
 </script>
+
 </html>
